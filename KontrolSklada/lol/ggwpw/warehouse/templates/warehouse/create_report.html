@@ -1,0 +1,227 @@
+{% extends 'warehouse/base.html' %}
+
+{% block title %}Создать отчет - Складская система{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-file-plus"></i> Создание нового отчета</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="reportForm">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="title" class="form-label">Название отчета *</label>
+                            <input type="text" class="form-control" id="title" name="title" required 
+                                   placeholder="Например: Остатки товаров на 10.10.2025">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="report_type" class="form-label">Тип отчета *</label>
+                            <select class="form-select" id="report_type" name="report_type" required>
+                                <option value="">-- Выберите тип --</option>
+                                {% for value, label in report_types %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="2" 
+                                  placeholder="Дополнительная информация об отчете"></textarea>
+                    </div>
+                    
+                    <!-- Период для отчета -->
+                    <div class="row mb-3" id="dateRange">
+                        <div class="col-md-6">
+                            <label for="date_from" class="form-label">Дата с</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="date_to" class="form-label">Дата по</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to">
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтры по секторам -->
+                    <div class="mb-3" id="sectorsFilter">
+                        <label class="form-label">Секторы склада</label>
+                        <div class="row">
+                            {% for sector in sectors %}
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           value="{{ sector.id }}" id="sector_{{ sector.id }}" name="sectors">
+                                    <label class="form-check-label" for="sector_{{ sector.id }}">
+                                        {{ sector.name }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted">Оставьте пустым для включения всех секторов</small>
+                    </div>
+                    
+                    <!-- Фильтры по ПВЗ -->
+                    <div class="mb-3" id="pvzFilter" style="display: none;">
+                        <label class="form-label">Пункты выдачи заказов</label>
+                        <div class="row">
+                            {% for pvz in pickup_points %}
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           value="{{ pvz.id }}" id="pvz_{{ pvz.id }}" name="pickup_points">
+                                    <label class="form-check-label" for="pvz_{{ pvz.id }}">
+                                        {{ pvz.name }} <small class="text-muted">({{ pvz.address }})</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted">Оставьте пустым для включения всех ПВЗ</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'reports_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-file-plus"></i> Создать отчет
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Информация о типах отчетов -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="bi bi-info-circle"></i> Описание типов отчетов</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📋 Отчет по остаткам</h6>
+                        <p class="small text-muted mb-3">
+                            Показывает текущие остатки товаров на складе, распределение по секторам, 
+                            товары с низким остатком.
+                        </p>
+                        
+                        <h6>🔄 Отчет по движению товаров</h6>
+                        <p class="small text-muted mb-3">
+                            Отслеживает все операции поступления, списания и перемещения товаров 
+                            за указанный период.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>📮 Отчет по запросам ПВЗ</h6>
+                        <p class="small text-muted mb-3">
+                            Анализирует запросы от пунктов выдачи: статистика по статусам, 
+                            самые запрашиваемые товары.
+                        </p>
+                        
+                        <h6>📊 Статистический отчет</h6>
+                        <p class="small text-muted mb-3">
+                            Комплексная аналитика: общая статистика по складу, тренды, 
+                            топ товары и секторы.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reportTypeSelect = document.getElementById('report_type');
+    const dateRange = document.getElementById('dateRange');
+    const sectorsFilter = document.getElementById('sectorsFilter');
+    const pvzFilter = document.getElementById('pvzFilter');
+    
+    // Установить дату по умолчанию
+    const today = new Date().toISOString().split('T')[0];
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const monthAgoStr = monthAgo.toISOString().split('T')[0];
+    
+    document.getElementById('date_to').value = today;
+    document.getElementById('date_from').value = monthAgoStr;
+    
+    function updateFormFields() {
+        const selectedType = reportTypeSelect.value;
+        
+        // Показать/скрыть фильтры в зависимости от типа отчета
+        switch(selectedType) {
+            case 'inventory':
+                dateRange.style.display = 'none';
+                sectorsFilter.style.display = 'block';
+                pvzFilter.style.display = 'none';
+                break;
+            case 'movements':
+                dateRange.style.display = 'flex';
+                sectorsFilter.style.display = 'block';
+                pvzFilter.style.display = 'none';
+                break;
+            case 'requests':
+                dateRange.style.display = 'flex';
+                sectorsFilter.style.display = 'none';
+                pvzFilter.style.display = 'block';
+                break;
+            case 'statistics':
+                dateRange.style.display = 'flex';
+                sectorsFilter.style.display = 'block';
+                pvzFilter.style.display = 'block';
+                break;
+            default:
+                dateRange.style.display = 'none';
+                sectorsFilter.style.display = 'none';
+                pvzFilter.style.display = 'none';
+        }
+    }
+    
+    reportTypeSelect.addEventListener('change', updateFormFields);
+    
+    // Автоматическое заполнение названия отчета
+    reportTypeSelect.addEventListener('change', function() {
+        const titleInput = document.getElementById('title');
+        if (!titleInput.value) {
+            const typeText = this.options[this.selectedIndex].text;
+            const today = new Date().toLocaleDateString('ru-RU');
+            titleInput.value = `${typeText} на ${today}`;
+        }
+    });
+    
+    // Валидация формы
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        const reportType = reportTypeSelect.value;
+        
+        if (!reportType) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите тип отчета');
+            return;
+        }
+        
+        // Показать индикатор загрузки
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Создание отчета...';
+        submitBtn.disabled = true;
+        
+        // Если что-то пойдет не так, вернем кнопку в исходное состояние через 30 секунд
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 30000);
+    });
+});
+</script>
+{% endblock %}

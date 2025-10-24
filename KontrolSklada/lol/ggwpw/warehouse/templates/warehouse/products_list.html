@@ -1,0 +1,115 @@
+{% extends 'warehouse/base.html' %}
+
+{% block title %}Каталог товаров - Складская система{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-box-seam"></i> Каталог товаров</h2>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Поиск</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Название или артикул">
+            </div>
+            <div class="col-md-4">
+                <label for="sector" class="form-label">Сектор</label>
+                <select class="form-select" id="sector" name="sector">
+                    <option value="">Все секторы</option>
+                    {% for sector in sectors %}
+                        <option value="{{ sector.id }}" {% if sector.id == selected_sector %}selected{% endif %}>
+                            {{ sector.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Найти
+                </button>
+                <a href="{% url 'products_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список товаров -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="bi bi-list"></i> Товары на складе ({{ products.count }})</h5>
+        <a href="/admin/warehouse/product/add/" class="btn btn-sm btn-success">
+            <i class="bi bi-plus"></i> Добавить товар
+        </a>
+    </div>
+    <div class="card-body">
+        {% if products %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Артикул</th>
+                            <th>Сектор</th>
+                            <th>Количество</th>
+                            <th>Описание</th>
+                            <th>Обновлено</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr class="{% if product.quantity < 10 %}table-warning{% elif product.quantity == 0 %}table-danger{% endif %}">
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.quantity == 0 %}
+                                    <span class="badge bg-danger ms-2">Нет в наличии</span>
+                                {% elif product.quantity < 10 %}
+                                    <span class="badge bg-warning ms-2">Мало товара</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ product.article }}</code></td>
+                            <td>
+                                <span class="badge bg-info">{{ product.sector.name }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold {% if product.quantity == 0 %}text-danger{% elif product.quantity < 10 %}text-warning{% else %}text-success{% endif %}">
+                                    {{ product.quantity }} шт.
+                                </span>
+                            </td>
+                            <td>
+                                {% if product.description %}
+                                    {{ product.description|truncatechars:50 }}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.updated_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted">
+                <i class="bi bi-inbox display-1"></i>
+                <p class="mt-3">
+                    {% if search or selected_sector %}
+                        Товары не найдены по указанным критериям
+                    {% else %}
+                        На складе пока нет товаров
+                    {% endif %}
+                </p>
+                {% if not search and not selected_sector %}
+                    <a href="/admin/warehouse/product/add/" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Добавить первый товар
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

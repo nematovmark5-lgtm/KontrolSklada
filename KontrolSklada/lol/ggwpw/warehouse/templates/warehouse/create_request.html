@@ -1,0 +1,108 @@
+{% extends 'warehouse/base.html' %}
+
+{% block title %}Создать запрос - Складская система{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-plus-circle"></i> Создать запрос на товар</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="product" class="form-label">Выберите товар</label>
+                        <select class="form-select" id="product" name="product" required>
+                            <option value="">-- Выберите товар --</option>
+                            {% for product in products %}
+                                <option value="{{ product.id }}" data-quantity="{{ product.quantity }}">
+                                    {{ product.name }} ({{ product.article }}) - {{ product.quantity }} шт. в секторе "{{ product.sector.name }}"
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Доступны только товары, которые есть в наличии</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Количество</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                        <div class="form-text">Укажите необходимое количество товара</div>
+                        <div id="quantity-warning" class="text-danger small" style="display: none;">
+                            Запрашиваемое количество превышает доступное!
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'pickup_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                        <button type="submit" class="btn btn-success" id="submit-btn">
+                            <i class="bi bi-send"></i> Создать запрос
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Информационная карточка -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="bi bi-info-circle"></i> Как это работает?</h6>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>Выберите нужный товар из списка доступных</li>
+                    <li>Укажите необходимое количество</li>
+                    <li>Отправьте запрос на склад</li>
+                    <li>Дождитесь обработки запроса администратором склада</li>
+                </ol>
+                <p class="mb-0 text-muted">
+                    <i class="bi bi-lightbulb"></i> 
+                    Вы можете отслеживать статус запроса в панели ПВЗ
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('product');
+    const quantityInput = document.getElementById('quantity');
+    const quantityWarning = document.getElementById('quantity-warning');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    function checkQuantity() {
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        const availableQuantity = selectedOption ? parseInt(selectedOption.dataset.quantity) : 0;
+        const requestedQuantity = parseInt(quantityInput.value) || 0;
+        
+        if (requestedQuantity > availableQuantity && availableQuantity > 0) {
+            quantityWarning.style.display = 'block';
+            quantityWarning.textContent = `Доступно только ${availableQuantity} шт.`;
+            submitBtn.disabled = true;
+        } else {
+            quantityWarning.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+    }
+    
+    productSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const availableQuantity = selectedOption ? parseInt(selectedOption.dataset.quantity) : 0;
+        
+        if (availableQuantity > 0) {
+            quantityInput.max = availableQuantity;
+        }
+        checkQuantity();
+    });
+    
+    quantityInput.addEventListener('input', checkQuantity);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'pvz/base.html' %}
+
+{% block title %}Создать запрос{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Создать запрос на товар</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="product_id" class="form-label">Товар</label>
+                        <select class="form-select" id="product_id" name="product_id" required>
+                            <option value="">Выберите товар</option>
+                            {% for product in products %}
+                                <option value="{{ product.warehouse_id }}">
+                                    {{ product.name }} - {{ product.quantity }} шт. ({{ product.price }} руб.)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Количество</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Создать запрос
+                        </button>
+                        <a href="{% url 'pvz:dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Информация</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Выберите товар из каталога и укажите необходимое количество. 
+                    Запрос будет отправлен на склад для обработки.
+                </p>
+                
+                {% if not online_status %}
+                    <div class="alert alert-warning alert-sm">
+                        <i class="bi bi-wifi-off"></i> 
+                        Работаем в автономном режиме. Запрос будет отправлен при восстановлении соединения.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not products %}
+    <div class="alert alert-info mt-3">
+        <i class="bi bi-info-circle"></i> 
+        Товары не найдены. Проверьте соединение с основной системой.
+        <a href="{% url 'pvz:products_list' %}" class="alert-link">Обновить каталог</a>
+    </div>
+{% endif %}
+{% endblock %}

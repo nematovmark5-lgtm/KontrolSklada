@@ -1,0 +1,119 @@
+{% extends 'pvz/base.html' %}
+
+{% block title %}Каталог товаров{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3><i class="bi bi-box-seam"></i> Каталог товаров</h3>
+            <div>
+                {% if not online_status %}
+                    <span class="badge bg-warning">Автономный режим</span>
+                {% else %}
+                    <span class="badge bg-success">Онлайн</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Поиск по названию</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search }}" placeholder="Введите название товара">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sector" class="form-label">Сектор</label>
+                        <select class="form-select" id="sector" name="sector">
+                            <option value="">Все секторы</option>
+                            {% for sector in sectors %}
+                                <option value="{{ sector.name }}" 
+                                        {% if selected_sector == sector.name %}selected{% endif %}>
+                                    {{ sector.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary d-block w-100">
+                            <i class="bi bi-search"></i> Найти
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список товаров -->
+<div class="row">
+    {% if products %}
+        {% for product in products %}
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ product.name }}</h6>
+                        <p class="card-text text-muted small">{{ product.description|truncatechars:100 }}</p>
+                        <p class="mb-1">
+                            <span class="badge bg-secondary">{{ product.sector_name }}</span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>В наличии:</strong> {{ product.quantity }} шт.
+                        </p>
+                        <p class="mb-3">
+                            <strong>Цена:</strong> {{ product.price }} руб.
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        {% if product.quantity > 0 %}
+                            <a href="{% url 'pvz:create_request' %}?product={{ product.warehouse_id }}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="bi bi-cart-plus"></i> Запросить
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="bi bi-x-circle"></i> Нет в наличии
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle fs-1"></i>
+                <h5>Товары не найдены</h5>
+                <p>
+                    {% if not online_status %}
+                        Нет соединения с основной системой. Попробуйте позже.
+                    {% else %}
+                        По вашему запросу товары не найдены. Попробуйте изменить фильтры поиска.
+                    {% endif %}
+                </p>
+                <a href="{% url 'pvz:dashboard' %}" class="btn btn-primary">
+                    <i class="bi bi-house"></i> На главную
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if products %}
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <small class="text-muted">
+                Показано {{ products|length }} товар{{ products|length|pluralize:"ов" }}
+            </small>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

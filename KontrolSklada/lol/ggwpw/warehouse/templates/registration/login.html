@@ -1,0 +1,73 @@
+{% extends 'warehouse/base.html' %}
+
+{% block title %}Вход в систему - Складская система{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3><i class="bi bi-box-arrow-in-right"></i> Вход в систему</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Войти
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>
+                    Нет аккаунта? Обратитесь к администратору
+                </small>
+            </div>
+        </div>
+        
+        <!-- Демо данные -->
+        <div class="card mt-4 bg-light">
+            <div class="card-header">
+                <h6><i class="bi bi-info-circle"></i> Демо доступ</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Администратор:</strong></p>
+                <ul class="mb-3">
+                    <li>Логин: admin</li>
+                    <li>Пароль: admin123</li>
+                </ul>
+                
+                <p class="mb-2"><strong>Сотрудник ПВЗ:</strong></p>
+                <ul class="mb-0">
+                    <li>Логин: pvz_user</li>
+                    <li>Пароль: pvz123</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
